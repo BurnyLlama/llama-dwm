@@ -66,6 +66,7 @@ static const Layout layouts[] = {
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
  	{ "[@]",      spiral },
+ 	{ NULL, 	  NULL},
 };
 
 /* key definitions */
@@ -102,7 +103,9 @@ static Key keys[] = {
 	{ MODKEY,                       XK_t,		setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                       XK_f,		setlayout,      {.v = &layouts[3]} },
 	{ MODKEY,                       XK_m,		setlayout,      {.v = &layouts[2]} },
-	{ ALTKEY,                       XK_space,	setlayout,      {0} },
+	{ ALTKEY,						XK_space,  	cyclelayout,    {.i = -1 } },
+	{ ALTKEY|ShiftMask,           	XK_space, 	cyclelayout,    {.i = +1 } },
+	{ ALTKEY|ControlMask,           XK_space,	setlayout,      {0} },
 	{ MODKEY|ShiftMask,             XK_space,	togglefloating, {0} },
 	{ MODKEY|ShiftMask,             XK_f,		togglefullscr,  {0} },
 	{ MODKEY,                       XK_0,		view,           {.ui = ~0 } },
