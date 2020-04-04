@@ -1,11 +1,15 @@
---- dwm.c	2019-12-10 17:24:37.945708263 +1300
-+++ dwm.c	2019-12-10 17:41:46.192676099 +1300
-@@ -1817,7 +1823,7 @@ updatebars(void)
- 	for (m = mons; m; m = m->next) {
- 		if (m->barwin)
- 			continue;
--		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, DefaultDepth(dpy, screen),
-+		m->barwin = XCreateWindow(dpy, root, m->wx + sp, m->by + vp, m->ww - 2 * sp, bh, 0, DefaultDepth(dpy, screen),
- 				CopyFromParent, DefaultVisual(dpy, screen),
- 				CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
- 		XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
+--- dwm.c
++++ dwm.c
+@@ -730,8 +730,11 @@ drawbar(Monitor *m)
+ 
+ 	if ((w = m->ww - sw - x) > bh) {
+ 		if (m->sel) {
++			int mid = (m->ww - TEXTW(m->sel->name)) / 2 - x;
++			/* make sure name will not overlap on tags even when it is very long */
++			mid = mid >= lrpad / 2 ? mid : lrpad / 2;
+ 			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
+-			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
++			drw_text(drw, x, 0, w, bh, mid, m->sel->name, 0);
+ 			if (m->sel->isfloating)
+ 				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
+ 		} else {
