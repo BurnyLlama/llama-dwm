@@ -1,6 +1,54 @@
---- dwm.c
-+++ dwm.c
-@@ -50,8 +53,12 @@
+diff --git a/config.def.h b/config.def.h
+index 77ff358..3bee2e7 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -1,7 +1,7 @@
+ /* See LICENSE file for copyright and license details. */
+ 
+ /* appearance */
+-static const char font[]            = "-*-terminus-medium-r-*-*-16-*-*-*-*-*-*-*";
++static const char font[]            = "Sans 8";
+ static const char normbordercolor[] = "#444444";
+ static const char normbgcolor[]     = "#222222";
+ static const char normfgcolor[]     = "#bbbbbb";
+@@ -12,6 +12,7 @@ static const unsigned int borderpx  = 1;        /* border pixel of windows */
+ static const unsigned int snap      = 32;       /* snap pixel */
+ static const Bool showbar           = True;     /* False means no bar */
+ static const Bool topbar            = True;     /* False means bottom bar */
++static const Bool statusmarkup      = True;     /* True means use pango markup in status message */
+ 
+ /* tagging */
+ static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+diff --git a/config.mk b/config.mk
+index 484554a..cdfb642 100644
+--- a/config.mk
++++ b/config.mk
+@@ -15,8 +15,8 @@ XINERAMALIBS = -L${X11LIB} -lXinerama
+ XINERAMAFLAGS = -DXINERAMA
+ 
+ # includes and libs
+-INCS = -I. -I/usr/include -I${X11INC}
+-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${XINERAMALIBS}
++INCS = -I. -I/usr/include -I${X11INC} `pkg-config --cflags xft pango pangoxft`
++LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${XINERAMALIBS} `pkg-config --libs xft pango pangoxft`
+ 
+ # flags
+ CPPFLAGS = -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
+diff --git a/dwm.c b/dwm.c
+index 1d78655..8fae3ba 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -36,6 +36,9 @@
+ #include <X11/Xlib.h>
+ #include <X11/Xproto.h>
+ #include <X11/Xutil.h>
++#include <X11/Xft/Xft.h>
++#include <pango/pango.h>
++#include <pango/pangoxft.h>
+ #ifdef XINERAMA
+ #include <X11/extensions/Xinerama.h>
+ #endif /* XINERAMA */
+@@ -47,8 +50,12 @@
                                 * MAX(0, MIN((y)+(h),(m)->wy+(m)->wh) - MAX((y),(m)->wy)))
  #define ISVISIBLE(C)            ((C->tags & C->mon->tagset[C->mon->seltags]))
  #define LENGTH(X)               (sizeof X / sizeof X[0])
@@ -13,7 +61,7 @@
  #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
  #define WIDTH(X)                ((X)->w + 2 * (X)->bw)
  #define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
-@@ -107,11 +114,15 @@ typedef struct {
+@@ -104,11 +111,15 @@ typedef struct {
  	Drawable drawable;
  	GC gc;
  	struct {
@@ -31,7 +79,7 @@
  	} font;
  } DC; /* draw context */
  
-@@ -189,7 +200,7 @@ static void focus(Client *c);
+@@ -186,7 +197,7 @@ static void focus(Client *c);
  static void focusin(XEvent *e);
  static void focusmon(const Arg *arg);
  static void focusstack(const Arg *arg);
@@ -40,7 +88,16 @@
  static Bool getrootptr(int *x, int *y);
  static long getstate(Window w);
  static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
-@@ -482,18 +493,21 @@ cleanup(void) {
+@@ -254,7 +265,7 @@ static void zoom(const Arg *arg);
+ 
+ /* variables */
+ static const char broken[] = "broken";
+-static char stext[256];
++static char stext[512];
+ static int screen;
+ static int sw, sh;           /* X display screen geometry width, height */
+ static int bh, blw = 0;      /* bar geometry */
+@@ -479,18 +490,21 @@ cleanup(void) {
  	Arg a = {.ui = ~0};
  	Layout foo = { "", NULL };
  	Monitor *m;
@@ -66,7 +123,7 @@
  	XFreeGC(dpy, dc.gc);
  	XFreeCursor(dpy, cursor[CurNormal]);
  	XFreeCursor(dpy, cursor[CurResize]);
-@@ -584,6 +598,7 @@ configurenotify(XEvent *e) {
+@@ -581,6 +595,7 @@ configurenotify(XEvent *e) {
  			if(dc.drawable != 0)
  				XFreePixmap(dpy, dc.drawable);
  			dc.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
@@ -74,7 +131,7 @@
  			updatebars();
  			for(m = mons; m; m = m->next)
  				XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, bh);
-@@ -790,7 +805,7 @@ drawsquare(Bool filled, Bool empty, Bool invert, unsigned long col[ColLast]) {
+@@ -787,7 +802,7 @@ drawsquare(Bool filled, Bool empty, Bool invert, unsigned long col[ColLast]) {
  
  void
  drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
@@ -83,7 +140,7 @@
  	int i, x, y, h, len, olen;
  
  	XSetForeground(dpy, dc.gc, col[invert ? ColFG : ColBG]);
-@@ -799,20 +814,25 @@ drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
+@@ -796,20 +811,25 @@ drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
  		return;
  	olen = strlen(text);
  	h = dc.font.ascent + dc.font.descent;
@@ -115,7 +172,7 @@
  }
  
  void
-@@ -930,13 +950,13 @@ getatomprop(Client *c, Atom prop) {
+@@ -927,13 +947,13 @@ getatomprop(Client *c, Atom prop) {
  }
  
  unsigned long
@@ -133,7 +190,7 @@
  }
  
  Bool
-@@ -1037,36 +1057,24 @@ incnmaster(const Arg *arg) {
+@@ -1034,36 +1054,24 @@ incnmaster(const Arg *arg) {
  
  void
  initfont(const char *fontstr) {
@@ -187,7 +244,7 @@
  }
  
  #ifdef XINERAMA
-@@ -1615,17 +1623,16 @@ setup(void) {
+@@ -1612,17 +1620,16 @@ setup(void) {
  	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
  	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
  	/* init appearance */
@@ -212,7 +269,7 @@
  	/* init bars */
  	updatebars();
  	updatestatus();
-@@ -1695,13 +1702,15 @@ tagmon(const Arg *arg) {
+@@ -1692,13 +1699,15 @@ tagmon(const Arg *arg) {
  
  int
  textnw(const char *text, unsigned int len) {
