@@ -10,13 +10,8 @@ static const int vertpad 			= 4; 		/* Vertical outside pading for statbar */
 static const int sidepad 			= 4; 		/* Side -""- */
 static const int horizpadbar        = 6;        /* horizontal padding for statusbar */
 static const int vertpadbar         = 6;        /* vertical padding for statusbar */
-static const char *fonts[]          = { "Noto Sans:size=12", "Noto Color Emoji" };
-static const char dmenufont[]       = "Noto Sans:size=10";
-/*static const char col_gray1[]       = "#181818";
-static const char col_gray2[]       = "#232323";
-static const char col_gray3[]       = "#4b4bff"; //  Keeping default names for compatability (LAZINESS)... :/  
-static const char col_gray4[]       = "#ffffff";
-static const char col_cyan[]        = "#4b4bff";*/
+static const char *fonts[]          = { "Noto Sans:size=12", "FiraCode Nerd Font:size=14" };
+static const char dmenufont[]       = "Noto Sans:size=10"; 
 static const unsigned int baralpha = 0x88;
 static const unsigned int borderalpha = OPAQUE;
 static const char *colors[][3]      = {
@@ -42,7 +37,7 @@ static const unsigned int alphas[][3]      = {
 
 /* tagging */
 static const char *tagsalt[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
-static const char *tags[] = { "H", "T", "W", "C", "5", "6", "7", "8", "9" };
+static const char *tags[] = { "", "", "﬏", "ﭮ", "戮", "阮", "ﲎ", "", "爵" };
 
 static const Rule rules[] = {
 	/* xprop(1):
@@ -52,11 +47,10 @@ static const Rule rules[] = {
 	/* class      instance    title       tags mask     isfloating   monitor    float x,y,w,h         floatborderpx*/
 	{ "Gimp",     	NULL,       NULL,       0,            1,           -1,        50,50,500,500,        5 },
 	{ "Firefox",  	NULL,       NULL,       1 << 8,       0,           -1,        50,50,500,500,        5 },
-	{ "badge",  	NULL,       "badge",    1 << 8,       1,           -1,        50,800,500,500,        5 },
 };
 
 /* layout(s) */
-static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
+static const float mfact     = 0.6; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
 static const int resizehints = 0;    /* 1 means respect size hints in tiled resizals, 0 makes it aestechillay good, I think. */
 
@@ -64,7 +58,6 @@ static const int resizehints = 0;    /* 1 means respect size hints in tiled resi
 static const Layout layouts[] = {
 	/* symbol     arrange function */
 	{ "[]=",      tile },    /* first entry is default */
-	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
  	{ "[@]",      spiral },
  	{ NULL, 	  NULL},
@@ -86,13 +79,25 @@ static const Layout layouts[] = {
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu-app-runner"};
 static const char *dmenucalccmd[] = { "dmenu-calc"};
+static const char *scrotcmd[] = { "screenshot"};
 static const char *termcmd[]  = { "st", NULL };
+static const char *audioup[] = { "sad", "up"};
+static const char *audiodown[] = { "sad", "down"};
+static const char *audiomute[] = { "sad", "toggle"};
+static const char *audionext[] = { "sad", "next"};
+static const char *audioprev[] = { "sad", "prev"};
+static const char *audiopause[] = { "sad", "pause"};
+static const char *brightup[] = { "brightness", "inc", "20"};
+static const char *brightdown[] = { "brightness", "dec", "20"};
+
+#include <X11/XF86keysym.h> //Include the cool keys.
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_space,	spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_c,		spawn,          {.v = dmenucalccmd } },
 	{ MODKEY,                       XK_Return, 	spawn,          {.v = termcmd } },
+	{ MODKEY,                       XK_p,       spawn,          {.v = scrotcmd} },
 	{ MODKEY,                       XK_b,      	togglebar,      {0} },
 	{ MODKEY,                       XK_Left,	focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_Right,	focusstack,     {.i = -1 } },
@@ -132,6 +137,14 @@ static Key keys[] = {
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY|ShiftMask,             XK_e,      quit,           {0} },
 	{ MODKEY|ControlMask|ShiftMask, XK_r,      quit,           {1} }, 
+	{ 0,                       XF86XK_AudioRaiseVolume, spawn, {.v = audioup} },
+	{ 0,                       XF86XK_AudioLowerVolume, spawn, {.v = audiodown} },
+	{ 0,                       XF86XK_AudioMute, spawn, {.v = audiomute} },
+	{ 0,                       XF86XK_AudioNext, spawn, {.v = audionext} },
+	{ 0,                       XF86XK_AudioPrev, spawn, {.v = audioprev} },
+	{ 0,                       XF86XK_AudioPlay, spawn, {.v = audiopause} },
+	{ 0,                       XF86XK_MonBrightnessUp, spawn, {.v = brightup} },
+	{ 0,                       XF86XK_MonBrightnessDown, spawn, {.v = brightdown} },
 };
 
 /* button definitions */

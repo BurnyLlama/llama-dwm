@@ -1437,10 +1437,12 @@ run(void)
 			handler[ev.type](&ev); /* call handler */
 }
 
+
+// No no...
 void
 runAutostart(void) {
-	system("cd ~/.dwm; ./autostart_blocking.sh");
-	system("cd ~/.dwm; ./autostart.sh &");
+	//system("cd ~/.dwm; ./autostart_blocking.sh");
+	//system("cd ~/.dwm; ./autostart.sh &");
 }
 
 void
